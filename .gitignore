@@ -1,0 +1,43 @@
+# --- Entorno y Dependencias ---
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+.uv/
+
+# --- Variables de Entorno (CRÍTICO) ---
+# Aquí van tus API Keys de OpenAI, Anthropic, Pinecone, etc.
+.env
+*.env
+.env.local
+!.env.template
+
+# --- Almacenamiento de Datos y Vectores ---
+# No queremos subir gigas de PDFs o bases de datos vectoriales
+data/
+*.db
+*.sqlite
+# Si usas ChromaDB, FAISS o LanceDB localmente:
+storage/
+vector_db/
+index.faiss
+chroma_db/
+*.zip
+
+# --- Logs y Trazabilidad ---
+# Los frameworks de RAG suelen generar muchos logs
+*.log
+.langsmith/
+.arize/
+
+# --- Configuración de Editores y OS ---
+.DS_Store
+.vscode/
+.idea/
+.continue/
+
+# --- Build artifacts ---
+dist/
+build/
+*.egg-info/
