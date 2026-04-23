@@ -8,9 +8,8 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Instalar uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.local/bin:${PATH}"
+# Instalar uv con versión fijada para builds reproducibles
+RUN python -m pip install --no-cache-dir uv==0.5.7
 
 # Copiar archivos de dependencias
 COPY pyproject.toml uv.lock ./

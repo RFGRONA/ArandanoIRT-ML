@@ -23,7 +23,8 @@ def chat_endpoint(request: ChatRequest):
         result = rag_service.process_chat(request.question, request.iot_context or "")
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error en chat_endpoint: {e}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor al procesar la consulta.")
 
 @app.post("/ingest-logs", dependencies=[Depends(get_api_key)])
 def ingest_logs_endpoint(request: BatchIngestLogRequest):
@@ -35,7 +36,8 @@ def ingest_logs_endpoint(request: BatchIngestLogRequest):
         chroma_service.ingest_logs_batch(ids=ids, texts=texts, metadatas=metadatas)
         return {"status": "success", "message": f"{len(request.logs)} logs vectorizados correctamente."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error en ingest_logs_endpoint: {e}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor al vectorizar logs.")
 
 @app.post("/update-papers", dependencies=[Depends(get_api_key)])
 def update_papers_endpoint(file: UploadFile = File(...)):
@@ -52,7 +54,7 @@ def update_papers_endpoint(file: UploadFile = File(...)):
         if success:
             return {"status": "success", "message": "Base de datos ChromaDB actualizada exitosamente."}
         else:
-            raise HTTPException(status_code=500, detail="Fallo al reemplazar la base de datos.")
+            raise HTTPException(status_code=500, detail="Fallo interno al reemplazar la base de datos.")
     finally:
         if os.path.exists(temp_file):
             os.remove(temp_file)
@@ -68,7 +70,8 @@ def export_db_endpoint(background_tasks: BackgroundTasks):
             media_type="application/zip"
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error en export_db_endpoint: {e}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor al exportar la base de datos.")
 
 @app.post("/update-api-key", dependencies=[Depends(get_api_key)])
 def update_api_key_endpoint(request: UpdateApiKeyRequest):
@@ -90,4 +93,5 @@ def update_api_key_endpoint(request: UpdateApiKeyRequest):
             "message": "API Key de Gemini actualizada y persistida correctamente. Reinicie el servicio para aplicar el cambio de forma segura."
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error en update_api_key_endpoint: {e}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor al actualizar la API Key.")

@@ -8,8 +8,9 @@ from langchain_community.vectorstores import Chroma
 
 class ChromaService:
     def __init__(self):
-        self.papers_persist_directory = os.getenv("CHROMA_DB_PAPERS", "./chroma_db/papers")
-        self.logs_persist_directory = os.getenv("CHROMA_DB_LOGS", "./chroma_db/logs")
+        self.base_directory = os.getenv("CHROMA_DB_BASE", "./chroma_db")
+        self.papers_persist_directory = os.getenv("CHROMA_DB_PAPERS", os.path.join(self.base_directory, "papers"))
+        self.logs_persist_directory = os.getenv("CHROMA_DB_LOGS", os.path.join(self.base_directory, "logs"))
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         
         self.embeddings = HuggingFaceEmbeddings(
@@ -70,8 +71,7 @@ class ChromaService:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".zip") as tmp:
             zip_path = tmp.name
             
-        base_dir = os.path.dirname(self.papers_persist_directory)
-        shutil.make_archive(zip_path.replace('.zip', ''), 'zip', base_dir)
+        shutil.make_archive(zip_path.replace('.zip', ''), 'zip', self.base_directory)
         return zip_path
 
     def replace_papers_db(self, zip_filepath: str):
@@ -83,10 +83,14 @@ class ChromaService:
         
         try:
             with zipfile.ZipFile(zip_filepath, 'r') as zip_ref:
-                for member in zip_ref.namelist():
-                    target_path = os.path.abspath(os.path.join(temp_extract_dir, member))
+                for member in zip_ref.infolist():
+                    # Check for symlinks (POSIX bitmask 0xA000)
+                    if (member.external_attr >> 16) & 0o120000:
+                        raise ValueError(f"Enlaces simbólicos (symlinks) no permitidos en el ZIP: {member.filename}")
+                    
+                    target_path = os.path.abspath(os.path.join(temp_extract_dir, member.filename))
                     if not target_path.startswith(os.path.abspath(temp_extract_dir)):
-                        raise ValueError(f"Zip slip vulnerability detected in file: {member}")
+                        raise ValueError(f"Vulnerabilidad Zip Slip detectada en archivo: {member.filename}")
                     zip_ref.extract(member, temp_extract_dir)
             
             candidate_dirs = [
