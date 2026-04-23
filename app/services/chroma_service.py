@@ -82,11 +82,26 @@ class ChromaService:
             with zipfile.ZipFile(zip_filepath, 'r') as zip_ref:
                 zip_ref.extractall(temp_extract_dir)
             
-            db_source_dir = temp_extract_dir
-            for root, dirs, files in os.walk(temp_extract_dir):
-                if 'chroma.sqlite3' in files:
-                    db_source_dir = root
-                    break
+            candidate_dirs = [
+                os.path.join(temp_extract_dir, "papers"),
+                os.path.join(temp_extract_dir, "chroma_db", "papers"),
+            ]
+            matching_dirs = [
+                candidate_dir
+                for candidate_dir in candidate_dirs
+                if os.path.isfile(os.path.join(candidate_dir, "chroma.sqlite3"))
+            ]
+            if not matching_dirs:
+                raise ValueError(
+                    "Invalid papers DB ZIP structure. Expected 'papers/chroma.sqlite3' "
+                    "or 'chroma_db/papers/chroma.sqlite3'."
+                )
+            if len(matching_dirs) > 1:
+                raise ValueError(
+                    "Ambiguous papers DB ZIP structure. Multiple valid papers DB "
+                    "directories were found."
+                )
+            db_source_dir = matching_dirs[0]
             
             if os.path.exists(self.papers_persist_directory):
                 shutil.rmtree(self.papers_persist_directory)

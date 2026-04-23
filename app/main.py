@@ -1,6 +1,6 @@
 import os
 import shutil
-from fastapi import FastAPI, Depends, UploadFile, File, HTTPException
+from fastapi import FastAPI, Depends, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv, set_key
@@ -14,13 +14,19 @@ load_dotenv()
 
 app = FastAPI(title="ArandanoIRT-ML RAG API")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+if allowed_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=False,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", "X-API-Key"],
+    )
 
 @app.get("/health")
 def health_check():
@@ -67,9 +73,10 @@ def update_papers_endpoint(file: UploadFile = File(...)):
             os.remove(temp_file)
 
 @app.get("/export-db", dependencies=[Depends(get_api_key)])
-def export_db_endpoint():
+def export_db_endpoint(background_tasks: BackgroundTasks):
     try:
         zip_path = chroma_service.export_db_zip()
+        background_tasks.add_task(os.remove, zip_path)
         return FileResponse(
             path=zip_path,
             filename="chroma_db_export.zip",
@@ -80,11 +87,16 @@ def export_db_endpoint():
 
 @app.post("/update-api-key", dependencies=[Depends(get_api_key)])
 def update_api_key_endpoint(request: UpdateApiKeyRequest):
+    global rag_service
     try:
         # Actualiza en la sesión actual
         os.environ["GOOGLE_API_KEY"] = request.api_key
         # Actualiza el archivo .env para persistencia
         set_key(".env", "GOOGLE_API_KEY", request.api_key)
+        
+        # Reconstruye el servicio RAG
+        from app.services.rag_service import RAGService
+        rag_service = RAGService()
         
         return {"status": "success", "message": "API Key de Gemini actualizada correctamente."}
     except Exception as e:

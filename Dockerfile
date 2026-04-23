@@ -15,9 +15,9 @@ ENV PATH="/root/.local/bin:${PATH}"
 # Copiar archivos de dependencias
 COPY pyproject.toml uv.lock ./
 
-# Sincronizar dependencias globales usando uv
-RUN uv sync --system
-
+# Sincronizar dependencias globales usando uv, excluyendo torch
+RUN uv sync --system --no-install-package torch \
+    && uv pip install --system --index-url https://download.pytorch.org/whl/cpu torch==2.11.0
 # Copiar la aplicación
 COPY app ./app
 COPY .env.template ./
