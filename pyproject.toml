@@ -1,9 +1,9 @@
 [project]
 name = "arandanoirt-ml"
 version = "0.1.0"
-description = "Sistema RAG para consulta y analisis de información de estré hídrico en arándano."
+description = "Sistema RAG para consulta y análisis de información de estrés hídrico en arándano."
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 dependencies = [
     "chromadb>=1.5.8",
     "fastapi>=0.136.0",

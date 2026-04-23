@@ -13,7 +13,9 @@ sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
 
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+if ! grep -Eq '^/swapfile[[:space:]]+none[[:space:]]+swap[[:space:]]+sw[[:space:]]+0[[:space:]]+0$' /etc/fstab; then
+    echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab > /dev/null
+fi
 
 echo "SWAP configurado exitosamente."
 swapon --show

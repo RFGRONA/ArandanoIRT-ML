@@ -29,7 +29,7 @@ def health_check():
 @app.post("/chat", dependencies=[Depends(get_api_key)])
 def chat_endpoint(request: ChatRequest):
     try:
-        result = rag_service.process_chat(request.question, request.iot_context)
+        result = rag_service.process_chat(request.question, request.iot_context or "")
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -47,15 +47,16 @@ def ingest_logs_endpoint(request: BatchIngestLogRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/update-papers", dependencies=[Depends(get_api_key)])
-async def update_papers_endpoint(file: UploadFile = File(...)):
+def update_papers_endpoint(file: UploadFile = File(...)):
     if not file.filename.endswith('.zip'):
         raise HTTPException(status_code=400, detail="El archivo debe ser un .zip")
         
-    temp_file = f"/tmp/{file.filename}"
+    import tempfile
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".zip") as tmp:
+        temp_file = tmp.name
+        shutil.copyfileobj(file.file, tmp)
+        
     try:
-        with open(temp_file, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-            
         success = chroma_service.replace_papers_db(temp_file)
         if success:
             return {"status": "success", "message": "Base de datos ChromaDB actualizada exitosamente."}

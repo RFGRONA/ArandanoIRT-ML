@@ -1,7 +1,6 @@
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
 from app.services.chroma_service import chroma_service
@@ -71,7 +70,8 @@ class RAGService:
             chain = self.router_prompt | self.llm_lite | StrOutputParser()
             decision = chain.invoke({"question": query, "iot_context": iot_context}).strip().upper()
             return "COMPLEJA" if "COMPLEJA" in decision else "SIMPLE"
-        except:
+        except Exception as e:
+            # En caso de error, enviar al modelo más capaz por seguridad
             return "COMPLEJA"
 
     def process_chat(self, question: str, iot_context: str = ""):

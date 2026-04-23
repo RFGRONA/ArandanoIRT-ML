@@ -20,7 +20,7 @@ def main():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f"\n🖥️  Dispositivo: {device.upper()}")
     
-    persist_directory = "./chroma_db"
+    persist_directory = "./chroma_db/papers"
     collection_name = "papers_expertos"
     
     if os.path.exists(persist_directory) and os.listdir(persist_directory):
