@@ -58,7 +58,8 @@ cp .env.template .env
 # .env
 GOOGLE_API_KEY=tu_api_key_de_google_aqui
 X_API_KEY=tu_clave_secreta_para_el_monolito_aqui
-CHROMA_DB_DIR=./chroma_db
+CHROMA_DB_PAPERS=./chroma_db/papers
+CHROMA_DB_LOGS=./chroma_db/logs
 ```
 *(Nota: la `GOOGLE_API_KEY` puede ser actualizada sin reiniciar el servidor a través del endpoint `/update-api-key`).*
 
