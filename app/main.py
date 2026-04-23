@@ -72,17 +72,22 @@ def export_db_endpoint(background_tasks: BackgroundTasks):
 
 @app.post("/update-api-key", dependencies=[Depends(get_api_key)])
 def update_api_key_endpoint(request: UpdateApiKeyRequest):
-    global rag_service
+    """
+    IMPORTANTE: Este endpoint permite sobrescribir permanentemente GOOGLE_API_KEY en disco 
+    usando la X-API-KEY. En producción, considere deshabilitar este endpoint, restringirlo 
+    a IPs específicas, o usar una clave de administrador separada.
+    """
     try:
-        # Actualiza en la sesión actual
+        # Reflejarla en el entorno del proceso actual sin intentar recargar
+        # dependencias globales en caliente, ya que no es seguro con concurrencia
+        # ni consistente en despliegues con múltiples workers.
         os.environ["GOOGLE_API_KEY"] = request.api_key
-        # Actualiza el archivo .env para persistencia
+        # Persistir la clave para futuros arranques del servicio.
         set_key(".env", "GOOGLE_API_KEY", request.api_key)
         
-        # Reconstruye el servicio RAG
-        from app.services.rag_service import RAGService
-        rag_service = RAGService()
-        
-        return {"status": "success", "message": "API Key de Gemini actualizada correctamente."}
+        return {
+            "status": "success", 
+            "message": "API Key de Gemini actualizada y persistida correctamente. Reinicie el servicio para aplicar el cambio de forma segura."
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

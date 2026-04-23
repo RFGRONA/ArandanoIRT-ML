@@ -46,7 +46,10 @@ class ChromaService:
     def get_logs_retriever(self, k=3):
         return self.logs_store.as_retriever(search_kwargs={"k": k})
 
-    def ingest_logs_batch(self, ids: list[str], texts: list[str], metadatas: list[dict]):
+    def ingest_logs_batch(self, ids: list[str], texts: list[str], metadatas: list[dict | None]):
+        if not (len(ids) == len(texts) == len(metadatas)):
+            raise ValueError("Las listas ids, texts y metadatas deben tener exactamente la misma longitud.")
+            
         for i, meta in enumerate(metadatas):
             if meta is None:
                 metadatas[i] = {}
@@ -80,7 +83,11 @@ class ChromaService:
         
         try:
             with zipfile.ZipFile(zip_filepath, 'r') as zip_ref:
-                zip_ref.extractall(temp_extract_dir)
+                for member in zip_ref.namelist():
+                    target_path = os.path.abspath(os.path.join(temp_extract_dir, member))
+                    if not target_path.startswith(os.path.abspath(temp_extract_dir)):
+                        raise ValueError(f"Zip slip vulnerability detected in file: {member}")
+                    zip_ref.extract(member, temp_extract_dir)
             
             candidate_dirs = [
                 os.path.join(temp_extract_dir, "papers"),
