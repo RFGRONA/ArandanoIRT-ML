@@ -2,7 +2,6 @@ import os
 import shutil
 from fastapi import FastAPI, Depends, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
-from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv, set_key
 
 from app.core.security import get_api_key
@@ -13,20 +12,6 @@ from app.services.chroma_service import chroma_service
 load_dotenv()
 
 app = FastAPI(title="ArandanoIRT-ML RAG API")
-
-allowed_origins = [
-    origin.strip()
-    for origin in os.getenv("ALLOWED_ORIGINS", "").split(",")
-    if origin.strip()
-]
-if allowed_origins:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=allowed_origins,
-        allow_credentials=False,
-        allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "X-API-Key"],
-    )
 
 @app.get("/health")
 def health_check():
