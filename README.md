@@ -61,7 +61,7 @@ X_API_KEY=tu_clave_secreta_para_el_monolito_aqui
 CHROMA_DB_PAPERS=./chroma_db/papers
 CHROMA_DB_LOGS=./chroma_db/logs
 ```
-*(Nota: la `GOOGLE_API_KEY` puede ser actualizada sin reiniciar el servidor a través del endpoint `/update-api-key`).*
+*(Nota: La `GOOGLE_API_KEY` puede ser modificada a través del endpoint `/update-api-key`, pero **requerirá reiniciar el servidor** para aplicarse de forma segura).*
 
 ---
 

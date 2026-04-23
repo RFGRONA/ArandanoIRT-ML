@@ -126,8 +126,9 @@ Descarga un archivo binario `chroma_db_export.zip`.
 
 ---
 
-### 5. `POST /update-api-key`
-Actualiza y sobreescribe la API_KEY de Gemini (`GOOGLE_API_KEY`) guardándola permanentemente en el archivo `.env`.
+### 4. `POST /update-api-key`
+Actualiza y persiste la clave de la API de Google Gemini en el archivo `.env`.
+*(Nota de Seguridad: Este endpoint sobrescribe las credenciales globales en disco. Por diseño de concurrencia y seguridad, **se requiere reiniciar el servicio** para que la nueva llave tome efecto de manera segura en todos los workers).*
 
 **Headers:**
 - `X-API-KEY: <secret>`
@@ -136,15 +137,15 @@ Actualiza y sobreescribe la API_KEY de Gemini (`GOOGLE_API_KEY`) guardándola pe
 **Body:**
 ```json
 {
-  "api_key": "AIzaSy_NUEVA_CLAVE..."
+  "api_key": "AIzaSyAZ..."
 }
 ```
 
-**Respuesta Exitosa (200 OK):**
+**Respuesta (200 OK):**
 ```json
 {
   "status": "success",
-  "message": "API Key de Gemini actualizada correctamente."
+  "message": "API Key de Gemini actualizada y persistida correctamente. Reinicie el servicio para aplicar el cambio de forma segura."
 }
 ```
 
