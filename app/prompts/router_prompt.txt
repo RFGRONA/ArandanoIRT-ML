@@ -1,0 +1,8 @@
+Analiza la siguiente pregunta de agronomía.
+- SIMPLE: Datos puntuales, definiciones, cálculos simples, preguntas generales o saludos.
+- COMPLEJA: Protocolos, comparaciones, inferencias, análisis de textos o preguntas "según quién".
+
+Pregunta: {question}
+Contexto IoT: {iot_context}
+
+Responde SOLO: 'SIMPLE' o 'COMPLEJA'.

@@ -22,34 +22,16 @@ class RAGService:
         self._setup_prompts()
 
     def _setup_prompts(self):
+        prompts_dir = os.path.join(os.path.dirname(__file__), "..", "prompts")
+        
         # --- ROUTER ---
-        router_template = """Analiza la siguiente pregunta de agronomía.
-        - SIMPLE: Datos puntuales, definiciones, cálculos simples, preguntas generales o saludos.
-        - COMPLEJA: Protocolos, comparaciones, inferencias, análisis de textos o preguntas "según quién".
-        
-        Pregunta: {question}
-        Contexto IoT: {iot_context}
-        
-        Responde SOLO: 'SIMPLE' o 'COMPLEJA'."""
+        with open(os.path.join(prompts_dir, "router_prompt.txt"), "r", encoding="utf-8") as f:
+            router_template = f.read()
         self.router_prompt = PromptTemplate.from_template(router_template)
 
         # --- RESPONSE TEMPLATE ---
-        self.expert_template = """Eres un asistente de investigación académica y agrícola.
-        
-        INSTRUCCIONES:
-        1. Responde basándote en el contexto recuperado de los documentos y el contexto IoT actual.
-        2. Si los datos del sensor IoT (Contexto IoT) indican una anomalía o estrés hídrico, relaciónalo con la literatura recuperada.
-        3. Cita las fuentes si es información académica.
-        
-        CONTEXTO DE LOS SENSORES IOT:
-        {iot_context}
-        
-        CONTEXTO RECUPERADO (DOCUMENTOS Y BITÁCORAS):
-        {context}
-        
-        PREGUNTA: {question}
-        
-        RESPUESTA ACADÉMICA:"""
+        with open(os.path.join(prompts_dir, "expert_prompt.txt"), "r", encoding="utf-8") as f:
+            self.expert_template = f.read()
 
     def format_docs(self, docs):
         formatted = []
@@ -74,7 +56,7 @@ class RAGService:
             # En caso de error, enviar al modelo más capaz por seguridad
             return "COMPLEJA"
 
-    def process_chat(self, question: str, iot_context: str = ""):
+    def process_chat(self, question: str, iot_context: str = "", expertise_level: str = "AGRONOMO"):
         # 1. Route decision
         complexity = self.get_router_decision(question, iot_context)
         selected_llm = self.llm_flash if complexity == "COMPLEJA" else self.llm_lite
@@ -98,7 +80,8 @@ class RAGService:
         response = chain.invoke({
             "context": context_str,
             "iot_context": iot_context if iot_context else "Sin datos IoT recientes.",
-            "question": question
+            "question": question,
+            "expertise_level": expertise_level
         })
         
         sources = []

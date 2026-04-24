@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any, List
 class ChatRequest(BaseModel):
     question: str
     iot_context: Optional[str] = None
+    expertise_level: Optional[str] = "AGRONOMO"
 
 class LogEntry(BaseModel):
     observation_id: str

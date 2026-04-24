@@ -25,10 +25,15 @@ Realiza una consulta a la Inteligencia Artificial usando Retrieval-Augmented Gen
 **Body:**
 ```json
 {
-  "question": "¿Cuáles son los síntomas del estrés hídrico en arándanos?",
-  "iot_context": "Los sensores indican una humedad del suelo del 15% y temperatura foliar de 32°C."
+  "question": "¿Cuáles son los niveles óptimos de humedad para arándanos biloxi?",
+  "iot_context": "Los sensores indican una humedad actual del suelo del 15% y temperatura de 28°C.",
+  "expertise_level": "AGRONOMO"
 }
 ```
+
+* **`question`**: (String) Pregunta del usuario.
+* **`iot_context`**: (String, opcional) Datos de contexto de los sensores. Si no hay datos, se omite.
+* **`expertise_level`**: (String, opcional) Nivel de experiencia del usuario para ajustar el tecnicismo de la respuesta. Recomendados: `"AGRICULTOR"`, `"AGRONOMO"`. Por defecto: `"AGRONOMO"`
 
 **Respuesta Exitosa (200 OK):**
 ```json

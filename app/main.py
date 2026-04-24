@@ -20,7 +20,11 @@ def health_check():
 @app.post("/chat", dependencies=[Depends(get_api_key)])
 def chat_endpoint(request: ChatRequest):
     try:
-        result = rag_service.process_chat(request.question, request.iot_context or "")
+        result = rag_service.process_chat(
+            question=request.question, 
+            iot_context=request.iot_context or "",
+            expertise_level=request.expertise_level or "AGRONOMO"
+        )
         return result
     except Exception as e:
         print(f"Error en chat_endpoint: {e}")
