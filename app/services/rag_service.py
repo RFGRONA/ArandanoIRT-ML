@@ -1,9 +1,12 @@
 import os
+import logging
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 from app.services.chroma_service import chroma_service
+
+logger = logging.getLogger(__name__)
 
 class RAGService:
     def __init__(self):
@@ -57,20 +60,37 @@ class RAGService:
             return "COMPLEJA"
 
     def process_chat(self, question: str, iot_context: str = "", expertise_level: str = "AGRONOMO"):
+        logger.info(f"=== NUEVA CONSULTA ===")
+        logger.info(f"Pregunta: {question[:100]}...")
+        logger.info(f"Nivel: {expertise_level} | IoT Context: {'Sí' if iot_context else 'No'}")
+        
         # 1. Route decision
         complexity = self.get_router_decision(question, iot_context)
         selected_llm = self.llm_flash if complexity == "COMPLEJA" else self.llm_lite
+        logger.info(f"Complejidad: {complexity} -> Modelo: {'flash' if complexity == 'COMPLEJA' else 'flash-lite'}")
 
-        # 2. Retrieve from both collections
+        # 2. Retrieve from collections
         papers_retriever = chroma_service.get_papers_retriever()
-        logs_retriever = chroma_service.get_logs_retriever()
-        
-        # Manually combine for more control
         papers_docs = papers_retriever.invoke(question)
-        logs_docs = logs_retriever.invoke(question)
+        
+        logger.info(f"Papers recuperados: {len(papers_docs)} documentos")
+        for i, doc in enumerate(papers_docs):
+            logger.info(f"  Paper[{i}]: source={doc.metadata.get('source', 'N/A')}, page={doc.metadata.get('page', 'N/A')}, contenido={doc.page_content[:80]}...")
+        
+        # Solo consultar bitácoras si se seleccionó una planta (hay contexto IoT)
+        logs_docs = []
+        if iot_context:
+            logs_retriever = chroma_service.get_logs_retriever()
+            logs_docs = logs_retriever.invoke(question)
+            logger.info(f"Bitácoras recuperadas: {len(logs_docs)} documentos")
+            for i, doc in enumerate(logs_docs):
+                logger.info(f"  Log[{i}]: obs_id={doc.metadata.get('observation_id', 'N/A')}, contenido={doc.page_content[:80]}...")
+        else:
+            logger.info("Sin planta seleccionada, omitiendo búsqueda de bitácoras.")
         
         all_docs = papers_docs + logs_docs
         context_str = self.format_docs(all_docs)
+        logger.info(f"Contexto total formateado: {len(context_str)} caracteres")
 
         # 3. Generate response
         prompt = ChatPromptTemplate.from_template(self.expert_template)
@@ -85,10 +105,20 @@ class RAGService:
         })
         
         sources = []
+        seen = set()
         for doc in all_docs:
-            src = doc.metadata.get("source", "Bitácora")
-            pg = doc.metadata.get("page", "?")
-            sources.append({"source": src, "page": pg, "observation_id": doc.metadata.get("observation_id")})
+            obs_id = doc.metadata.get("observation_id")
+            if obs_id:
+                src_name = "Bitácora"
+                pg = None
+            else:
+                src_name = os.path.basename(doc.metadata.get("source", "Desconocido"))
+                pg = doc.metadata.get("page", None)
+            
+            key = f"{src_name}_{str(pg)}_{str(obs_id)}"
+            if key not in seen:
+                seen.add(key)
+                sources.append({"source": src_name, "page": pg, "observation_id": obs_id})
             
         return {
             "answer": response,
