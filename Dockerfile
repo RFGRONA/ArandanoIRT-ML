@@ -14,9 +14,16 @@ RUN python -m pip install --no-cache-dir uv==0.5.7
 # Copiar archivos de dependencias
 COPY pyproject.toml uv.lock ./
 
-# Sincronizar dependencias globales usando uv, excluyendo torch
-RUN uv sync --system --no-install-package torch \
-    && uv pip install --system --index-url https://download.pytorch.org/whl/cpu torch==2.11.0
+# Sincronizar dependencias (esto crea automáticamente un .venv en /app/.venv)
+RUN uv sync --no-install-package torch \
+    && uv pip install --index-url https://download.pytorch.org/whl/cpu torch==2.11.0
+
+# ¡CRÍTICO! Agregamos el entorno virtual al PATH del contenedor
+ENV PATH="/app/.venv/bin:$PATH"
+
+# ¡NUEVO! Evita que Python guarde los logs en el buffer interno
+ENV PYTHONUNBUFFERED=1
+
 # Copiar la aplicación
 COPY app ./app
 COPY .env.template ./

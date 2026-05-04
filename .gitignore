@@ -4,7 +4,7 @@ venv/
 env/
 __pycache__/
 *.pyc
-.uv/
+hf_cache/
 
 # --- Variables de Entorno (CRÍTICO) ---
 # Aquí van tus API Keys de OpenAI, Anthropic, Pinecone, etc.
@@ -18,6 +18,7 @@ __pycache__/
 data/
 *.db
 *.sqlite
+
 # Si usas ChromaDB, FAISS o LanceDB localmente:
 storage/
 vector_db/
