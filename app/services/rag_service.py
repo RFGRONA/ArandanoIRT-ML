@@ -104,8 +104,7 @@ class RAGService:
             "expertise_level": expertise_level
         })
         
-        sources = []
-        seen = set()
+        sources_dict = {}
         for doc in all_docs:
             obs_id = doc.metadata.get("observation_id")
             if obs_id:
@@ -116,9 +115,17 @@ class RAGService:
                 pg = doc.metadata.get("page", None)
             
             key = f"{src_name}_{str(pg)}_{str(obs_id)}"
-            if key not in seen:
-                seen.add(key)
-                sources.append({"source": src_name, "page": pg, "observation_id": obs_id})
+            if key not in sources_dict:
+                sources_dict[key] = {
+                    "source": src_name, 
+                    "page": pg, 
+                    "observation_id": obs_id,
+                    "content": doc.page_content
+                }
+            else:
+                sources_dict[key]["content"] += "\n\n[...] " + doc.page_content
+                
+        sources = list(sources_dict.values())
             
         return {
             "answer": response,
